@@ -12,6 +12,14 @@ An AI-engineered Magisk/KernelSU module designed to maximize ZRAM, Swappiness, a
 ## ⚠️ Important Note (Post-Boot Behavior)
 - **Brief Lag After Boot**: After every restart, the mobile device will experience a **brief lag/freeze for a short duration**. This is completely normal and happens while the system triggers the `post-fs-data` scripts and the AI configurations fully initialize. Performance will return to a super-smooth state immediately after.
 
+> [!WARNING]
+> **CRITICAL DISCLAIMER**
+>
+> This module has been **engineered by AI** for peak system and memory optimization. 
+> **USE AT YOUR OWN RISK!** 
+> 
+> The developer (Turbo) holds absolutely no responsibility for any bootloops, bricked devices, software instability, or hardware damage. Always ensure you have a full system backup before flashing.
+
 ## 🛠️ Requirements
 - Android Device with Magisk or KernelSU installed.
 - Root access.
