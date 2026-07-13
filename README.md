@@ -23,8 +23,3 @@ An AI-engineered Magisk/KernelSU module designed to maximize ZRAM, Swappiness, a
 ## 🛠️ Requirements
 - Android Device with Magisk or KernelSU installed.
 - Root access.
-
-**WEBUI**
-
-<img width="719" height="1212" alt="372dfae6-6acf-4db9-bbb3-3a1a39d22112" src="https://github.com/user-attachments/assets/179da483-e7a5-4259-ae5f-59aa4d734504" />
-
