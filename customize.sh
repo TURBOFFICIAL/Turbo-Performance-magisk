@@ -1,32 +1,32 @@
 #!/system/bin/sh
 
-# أمر ui_print هو اللي بيطبع الكلام على الشاشة أثناء التسطيب
+# ui_print outputs text to the screen during installation
 ui_print " "
 ui_print "====================================="
-ui_print "    Performance module   "
+ui_print "       Turbo Performance 🚀          "
 ui_print "====================================="
-ui_print "  Author: Turbo☝️🔥                  "
-ui_print "  Version: v1.0                      "
-ui_print "------------------------------------"
-ui_print "[+] جاري تهيئة الإعدادات..."
+ui_print "  Author: Mahmoud (Turbo) 🔥         "
+ui_print "  Version: v1.1                      "
+ui_print "-------------------------------------"
+ui_print "[+] Initializing core settings..."
 sleep 1
 
-# تقدر تخلي السكربت يقرأ القيم من ملف الـ config.prop ويطبعها للمستخدم
+# Reads configuration from config.prop if available
 if [ -f "$MODPATH/config.prop" ]; then
     . "$MODPATH/config.prop"
-    ui_print "[+] تم تحديد الحجم: $ZRAM_SIZE Bytes"
-    ui_print "[+] تم اختيار الخوارزمية: $ZRAM_ALGO"
+    ui_print "[+] Target Size detected: $ZRAM_SIZE Bytes"
+    ui_print "[+] Compression Algorithm: $ZRAM_ALGO"
 else
-    ui_print "[-] تحذير: ملف config.prop غير موجود!"
+    ui_print "[-] Warning: config.prop not found!"
 fi
 
 sleep 1
-ui_print "------------------------------------"
-ui_print "[+] جاري ضبط إعدادات الـ Swappiness والألعاب..."
-ui_print "[+] جاري إيقاف الـ KSM لمنع الـ Lag والحرارة..."
+ui_print "-------------------------------------"
+ui_print "[+] Tuning Swappiness & Memory pools..."
+ui_print "[+] Disabling KSM to eliminate micro-stutters..."
 sleep 1
-ui_print "------------------------------------"
-ui_print "⚡ تم التسطيب بنجاج! ⚡"
-ui_print "🎮 اعمل ريستارت وعيش الأداء الفاجر 🎮"
+ui_print "-------------------------------------"
+ui_print "⚡ Installed Successfully! ⚡"
+ui_print "🎮 Reboot your device and enjoy peak performance 🎮"
 ui_print "====================================="
 ui_print " "

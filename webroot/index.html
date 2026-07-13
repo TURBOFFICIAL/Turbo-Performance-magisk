@@ -1,39 +1,39 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZRAM & System Monitor</title>
+    <title>Turbo Performance - System & ZRAM Monitor</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-    <h2>لوحة مراقبة النظام والـ ZRAM ⚡</h2>
+    <h2>Turbo Performance - System & ZRAM Monitor ⚡</h2>
 
     <div class="grid">
         <div class="card">
-            <h3>الذاكرة (Memory)</h3>
-            <div class="data-row"><span>الرام العادي المستخدم:</span><span id="ram-usage">جاري القراءة...</span></div>
+            <h3>Memory</h3>
+            <div class="data-row"><span>Used RAM:</span><span id="ram-usage">Reading...</span></div>
             <div class="progress-container"><div id="ram-progress" class="progress-bar"></div></div>
             <br>
-            <div class="data-row"><span>الـ ZRAM النشط:</span><span id="zram-usage">جاري القراءة...</span></div>
+            <div class="data-row"><span>Active ZRAM:</span><span id="zram-usage">Reading...</span></div>
             <div class="progress-container"><div id="zram-progress" class="progress-bar zram-color"></div></div>
             <br>
-            <div class="data-row"><span>قيمة Swappiness الحالية:</span><span id="swap-val">--</span></div>
+            <div class="data-row"><span>Current Swappiness:</span><span id="swap-val">--</span></div>
         </div>
 
         <div class="card">
-            <h3>المعالج والرسوميات (CPU & GPU)</h3>
-            <div class="data-row"><span>حرارة المعالج (CPU):</span><span id="cpu-temp">جاري القراءة...</span></div>
-            <div class="data-row"><span>تردد الأنوية الكبيرة:</span><span id="cpu-freq">جاري القراءة...</span></div>
-            <div class="data-row"><span>تردد كرت الشاشة (GPU):</span><span id="gpu-freq">جاري القراءة...</span></div>
+            <h3>CPU & GPU</h3>
+            <div class="data-row"><span>CPU Temperature:</span><span id="cpu-temp">Reading...</span></div>
+            <div class="data-row"><span>Big Cores Frequency:</span><span id="cpu-freq">Reading...</span></div>
+            <div class="data-row"><span>GPU Frequency:</span><span id="gpu-freq">Reading...</span></div>
         </div>
 
         <div class="card">
-            <h3>الطاقة والبطارية (Battery)</h3>
-            <div class="data-row"><span>نسبة الشحن:</span><span id="bat-level">--</span></div>
-            <div class="data-row"><span>حرارة البطارية:</span><span id="bat-temp">--</span></div>
-            <div class="data-row"><span>سحب التيار (Current):</span><span id="bat-current">--</span></div>
+            <h3>Battery & Power</h3>
+            <div class="data-row"><span>Battery Level:</span><span id="bat-level">--</span></div>
+            <div class="data-row"><span>Battery Temp:</span><span id="bat-temp">--</span></div>
+            <div class="data-row"><span>Current Draw:</span><span id="bat-current">--</span></div>
         </div>
     </div>
 
