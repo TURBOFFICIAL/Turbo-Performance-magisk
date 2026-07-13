@@ -1,0 +1,15 @@
+{
+  "memTotal": 5787208,
+  "memAvail": 1637032,
+  "swapTotal": 6291452,
+  "swapFree": 4865504,
+  "swappiness": 100,
+  "cpuTemp": "47100",
+  "cpuFreq": "1344000",
+  "gpuFreq": "1114800000",
+  "batLevel": "44",
+  "batTemp": "403",
+  "batNow": "832812",
+  "batChargeFull": "4605000",
+  "batDesignFull": "5000000"
+}

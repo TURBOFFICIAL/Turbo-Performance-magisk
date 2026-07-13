@@ -1,0 +1,79 @@
+body { 
+    background-color: #0f0f12; 
+    color: #e0e0e2; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    padding: 15px; 
+    direction: rtl; 
+    margin: 0; 
+}
+
+h2 { 
+    color: #00e5ff; 
+    text-align: center; 
+    border-bottom: 2px solid #00e5ff; 
+    padding-bottom: 10px; 
+    margin-top: 10px; 
+    font-weight: 600; 
+    text-shadow: 0 0 10px rgba(0,229,255,0.3); 
+}
+
+.grid { 
+    display: grid; 
+    grid-template-columns: 1fr; 
+    gap: 12px; 
+    margin-top: 15px; 
+}
+
+.card { 
+    background: linear-gradient(145deg, #16161e, #1a1a26); 
+    padding: 15px; 
+    border-radius: 12px; 
+    border: 1px solid #252538; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
+}
+
+.card h3 { 
+    margin: 0 0 15px 0; 
+    color: #ff9d00; 
+    font-size: 16px; 
+    border-right: 3px solid #ff9d00; 
+    padding-right: 8px; 
+}
+
+.data-row { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 6px; 
+    font-size: 14px; 
+}
+
+.data-row span:last-child { 
+    font-weight: bold; 
+    color: #fff; 
+}
+
+/* ستايل الأشرطة الرهيب */
+.progress-container {
+    background-color: #0b0b0e;
+    border-radius: 4px;
+    height: 6px;
+    width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    border: 1px solid #1f1f2e;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #00e5ff, #00ff66);
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.4s ease-in-out;
+}
+
+.zram-color {
+    background: linear-gradient(90deg, #ff9d00, #ff4a4a) !important;
+}
+
+.status-good { color: #00ff66 !important; }
+.status-warn { color: #ff4a4a !important; }
