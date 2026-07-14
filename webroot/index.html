@@ -6,20 +6,20 @@
     <title>Turbo Performance - System & ZRAM Monitor</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body dir="ltr">
 
     <h2>Turbo Performance - System & ZRAM Monitor ⚡</h2>
 
     <div class="grid">
         <div class="card">
-            <h3>Memory</h3>
+            <h3>Memory Status</h3>
             <div class="data-row"><span>Used RAM:</span><span id="ram-usage">Reading...</span></div>
             <div class="progress-container"><div id="ram-progress" class="progress-bar"></div></div>
             <br>
             <div class="data-row"><span>Active ZRAM:</span><span id="zram-usage">Reading...</span></div>
             <div class="progress-container"><div id="zram-progress" class="progress-bar zram-color"></div></div>
             <br>
-            <div class="data-row"><span>Current Swappiness:</span><span id="swap-val">--</span></div>
+            <div class="data-row"><span>Swappiness (Active):</span><span id="swap-val">--</span></div>
         </div>
 
         <div class="card">
@@ -30,11 +30,35 @@
         </div>
 
         <div class="card">
+            <h3>🧠 Virtual Memory (VM) Status</h3>
+            <div class="data-row">
+                <span>vm.swappiness:</span>
+                <span id="vm-swappiness" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            </div>
+            <div class="data-row">
+                <span>vm.dirty_ratio:</span>
+                <span id="vm-dirty-ratio" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            </div>
+            <div class="data-row">
+                <span>vm.dirty_background_ratio:</span>
+                <span id="vm-dirty-bg-ratio" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            </div>
+            <div class="data-row">
+                <span>vm.vfs_cache_pressure:</span>
+                <span id="vm-vfs-pressure" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            </div>
+            <div class="data-row">
+                <span>ZRAM Compression:</span>
+                <span id="zram-algo" class="value" style="font-weight: bold; color: #00ffcc;">--</span>
+            </div>
+        </div>
+
+        <div class="card">
             <h3>Battery & Power</h3>
             <div class="data-row"><span>Battery Level:</span><span id="bat-level">--</span></div>
             <div class="data-row"><span>Battery Temp:</span><span id="bat-temp">--</span></div>
             <div class="data-row"><span>Current Draw:</span><span id="bat-current">--</span></div>
-        </div>
+            </div>
     </div>
 
     <script src="assets/monitor.js"></script>

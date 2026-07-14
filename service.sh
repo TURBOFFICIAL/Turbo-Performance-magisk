@@ -1,3 +1,5 @@
+#!/system/bin/sh
+
 MODDIR=${0%/*}
 CONFIG_FILE="$MODDIR/config.prop"
 
@@ -15,8 +17,6 @@ if [ -z "$ZRAM_ALGO" ] || [ -z "$ZRAM_SIZE" ]; then
   echo "ZRAM_ALGO or ZRAM_SIZE is not set! Exiting."
   exit 1
 fi
-
-# تم حذف الـ sleep 30 من هنا بناءً على طلبك ليعمل فوراً 🚀
 
 # 关闭并重置所有现有 zram 设备
 for dev in /dev/block/zram*; do
@@ -62,7 +62,7 @@ else
   exit 1
 fi
 
-# 检查是否还有多余 zram 设备
+# 检查是否还有多余 zram设备
 zram_count=$(ls /sys/block/ | grep -c '^zram')
 if [ "$zram_count" -gt 1 ]; then
   echo "Warning: More than one zram device present!"
@@ -73,58 +73,77 @@ fi
 # 🔥 التعديلات الفاجرة الإضافية للأداء الأقصى والألعاب 🔥
 # =======================================================
 
-# 1. إجبار النظام على الطيران بالـ ZRAM
-# غير سطر sysctl القديم بـ:
-su -c "echo 160 > /proc/sys/vm/swappiness"
+# 1. ضبط الـ Swappiness المتوازن والذكي للألعاب وسرعة النظام (عند الإقلاع المبدئي)
+echo 60 > /proc/sys/vm/swappiness 2>/dev/null
+sysctl -w vm.page-cluster=0 2>/dev/null
 
-sysctl -w vm.page-cluster=0
+# 2. تحسين الكاش وسرعة استجابة الذاكرة ومنع تجمد اللعبة
+sysctl -w vm.dirty_ratio=20 2>/dev/null
+sysctl -w vm.dirty_background_ratio=5 2>/dev/null
+sysctl -w vm.vfs_cache_pressure=200 2>/dev/null
 
-# 2. قفل الـ KSM لمنع الفريم دروب وحرارة المعالج
-# ضيف السطر ده جوه الـ while true في السكربت
-if [ -f /sys/kernel/mm/ksm/run ]; then
-  echo 0 > /sys/kernel/mm/ksm/run
-fi
-
-# 3. تحسين الكاش وسرعة استجابة الذاكرة ومنع تجمد اللعبة
-sysctl -w vm.dirty_ratio=30
-sysctl -w vm.dirty_background_ratio=10
-sysctl -w vm.vfs_cache_pressure=125
-
-# سكربت الخلفية لتحديث البيانات الحقيقية لـ WebUI
+# سكربت الخلفية لتحديث البيانات الحقيقية لـ WebUI والمهام المتكررة
 MODDIR="/data/adb/modules/Turbo-Performance"
 mkdir -p "$MODDIR/webroot/assets"
 
 while true; do
-  # 1. قراءة الذاكرة
+  # أ. قفل الـ KSM باستمرار لمنع الفريم دروب وحرارة المعالج أثناء اللعب
+  if [ -f /sys/kernel/mm/ksm/run ]; then
+    echo 0 > /sys/kernel/mm/ksm/run
+  fi
+
+  # ب. الإجبار المستمر لقيم الـ VM لضمان عدم قيام الروم بتعديلها في الخلفية
+  echo 60 > /proc/sys/vm/swappiness 2>/dev/null
+  echo 20 > /proc/sys/vm/dirty_ratio 2>/dev/null
+  echo 5 > /proc/sys/vm/dirty_background_ratio 2>/dev/null
+  echo 200 > /proc/sys/vm/vfs_cache_pressure 2>/dev/null
+
+  # 1. قراءة الذاكرة وقيم الـ VM الحقيقية من السيستم مباشرة
   MEMINFO=$(cat /proc/meminfo)
   MEM_TOTAL=$(echo "$MEMINFO" | awk '/MemTotal/ {print $2}')
   MEM_AVAIL=$(echo "$MEMINFO" | awk '/MemAvailable/ {print $2}')
   SWAP_TOTAL=$(echo "$MEMINFO" | awk '/SwapTotal/ {print $2}')
   SWAP_FREE=$(echo "$MEMINFO" | awk '/SwapFree/ {print $2}')
-  SWAPPINESS=$(cat /proc/sys/vm/swappiness)
+  
+  # قراءة قيم الـ VM لايف من السيستم للتأكد من نجاح الكتابة في اللوحة
+  SWAPPINESS=$(cat /proc/sys/vm/swappiness 2>/dev/null || echo "60")
+  DIRTY_RATIO=$(cat /proc/sys/vm/dirty_ratio 2>/dev/null || echo "20")
+  DIRTY_BG_RATIO=$(cat /proc/sys/vm/dirty_background_ratio 2>/dev/null || echo "5")
+  VFS_PRESSURE=$(cat /proc/sys/vm/vfs_cache_pressure 2>/dev/null || echo "200")
+  
+  # قراءة خوارزمية الـ ZRAM الحالية
+  ZRAM_CUR_ALGO="lz4"
+  if [ -f /sys/block/zram0/comp_algorithm ]; then
+    ZRAM_CUR_ALGO=$(cat /sys/block/zram0/comp_algorithm | grep -o '\[.*\]' | tr -d '[]')
+    [ -z "$ZRAM_CUR_ALGO" ] && ZRAM_CUR_ALGO=$(cat /sys/block/zram0/comp_algorithm | awk '{print $1}')
+  fi
 
   # 2. قراءة المعالج والـ GPU (مسارات السناب دراجون الحقيقية)
-  CPU_TEMP=$(cat /sys/class/thermal/thermal_zone22/temp 2>/dev/null || cat /sys/class/thermal/thermal_zone0/temp)
-  CPU_FREQ=$(cat /sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq 2>/dev/null || cat /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq)
-  GPU_FREQ=$(cat /sys/class/kgsl/kgsl-3d0/gpuclk 2>/dev/null || cat /sys/class/kgsl/kgsl-3d0/devfreq/cur_freq)
+  CPU_TEMP=$(cat /sys/class/thermal/thermal_zone22/temp 2>/dev/null || cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo "0")
+  CPU_FREQ=$(cat /sys/devices/system/cpu/cpufreq/policy4/scaling_cur_freq 2>/dev/null || cat /sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq 2>/dev/null || echo "0")
+  GPU_FREQ=$(cat /sys/class/kgsl/kgsl-3d0/gpuclk 2>/dev/null || cat /sys/class/kgsl/kgsl-3d0/devfreq/cur_freq 2>/dev/null || echo "0")
 
   # 3. قراءة البطارية (إضافة قراءة الصحة والسعة)
-  BAT_LEVEL=$(cat /sys/class/power_supply/battery/capacity)
-  BAT_TEMP=$(cat /sys/class/power_supply/battery/temp)
-  BAT_NOW=$(cat /sys/class/power_supply/battery/current_now)
+  BAT_LEVEL=$(cat /sys/class/power_supply/battery/capacity 2>/dev/null || echo "0")
+  BAT_TEMP=$(cat /sys/class/power_supply/battery/temp 2>/dev/null || echo "0")
+  BAT_NOW=$(cat /sys/class/power_supply/battery/current_now 2>/dev/null || echo "0")
   
-  # السطور الجديدة لقراءة السعة الحالية والتصميمية (mAh)
-  BAT_CHARGE_FULL=$(cat /sys/class/power_supply/battery/charge_full 2>/dev/null || cat /sys/class/power_supply/battery/charge_full_design)
-  BAT_DESIGN_FULL=$(cat /sys/class/power_supply/battery/charge_full_design 2>/dev/null || echo "5000000") # حطينا 5000 كا احتياط لو مش مقروءة
+  # السطور لقراءة السعة الحالية والتصميمية (mAh)
+  BAT_CHARGE_FULL=$(cat /sys/class/power_supply/battery/charge_full 2>/dev/null || cat /sys/class/power_supply/battery/charge_full_design 2>/dev/null || echo "0")
+  BAT_DESIGN_FULL=$(cat /sys/class/power_supply/battery/charge_full_design 2>/dev/null || echo "5000000")
 
 
-  # كتابة البيانات بصيغة JSON نظيفة جداً داخل الفولدر الصحيح
+  # كتابة البيانات بصيغة JSON نظيفة ومحدثة بكل القيم الجديدة داخل الفولدر الصحيح
   echo "{" > "$MODDIR/webroot/assets/stats.json"
   echo "  \"memTotal\": $MEM_TOTAL," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"memAvail\": $MEM_AVAIL," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"swapTotal\": $SWAP_TOTAL," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"swapFree\": $SWAP_FREE," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"swappiness\": $SWAPPINESS," >> "$MODDIR/webroot/assets/stats.json"
+  echo "  \"dirtyRatio\": $DIRTY_RATIO," >> "$MODDIR/webroot/assets/stats.json"
+  echo "  \"dirtyBgRatio\": $DIRTY_BG_RATIO," >> "$MODDIR/webroot/assets/stats.json"
+  echo "  \"vfsPressure\": $VFS_PRESSURE," >> "$MODDIR/webroot/assets/stats.json"
+  echo "  \"zramAlgo\": \"$ZRAM_CUR_ALGO\"," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"cpuTemp\": \"$CPU_TEMP\"," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"cpuFreq\": \"$CPU_FREQ\"," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"gpuFreq\": \"$GPU_FREQ\"," >> "$MODDIR/webroot/assets/stats.json"
@@ -134,7 +153,6 @@ while true; do
   echo "  \"batChargeFull\": \"$BAT_CHARGE_FULL\"," >> "$MODDIR/webroot/assets/stats.json"
   echo "  \"batDesignFull\": \"$BAT_DESIGN_FULL\"" >> "$MODDIR/webroot/assets/stats.json"
   echo "}" >> "$MODDIR/webroot/assets/stats.json"
-
 
   sleep 2
 done &

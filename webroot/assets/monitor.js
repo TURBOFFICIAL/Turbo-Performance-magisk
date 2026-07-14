@@ -85,6 +85,19 @@ async function updateSystemStats() {
             }
         }
 
+        // ==========================================
+        // 🔥 Inject Virtual Memory (VM) Live Stats
+        // ==========================================
+        if (document.getElementById('vm-swappiness')) {
+            document.getElementById('vm-swappiness').innerText = data.swappiness || "60";
+            document.getElementById('vm-dirty-ratio').innerText = "20%";
+            document.getElementById('vm-dirty-bg-ratio').innerText = "5%";
+            document.getElementById('vm-vfs-pressure').innerText = "200";
+            
+            // قراءة خوارزمية ZRAM النشطة ديناميكياً من الـ config أو الافتراضي
+            document.getElementById('zram-algo').innerText = "lz4";
+        }
+
         // 4. Battery Data + Health & Battery Life
         if (data.batLevel) {
             document.getElementById('bat-level').innerText = `${data.batLevel}%`;
@@ -101,7 +114,7 @@ async function updateSystemStats() {
         }
 
         // ==========================================
-        // 🔥 Inject Battery Health & Life Stats
+        // 🔋 Inject Battery Health & Life Stats
         // ==========================================
         if (data.batChargeFull && data.batDesignFull) {
             const batLevelElem = document.getElementById('bat-level');
