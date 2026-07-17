@@ -82,10 +82,28 @@ sysctl -w vm.dirty_ratio=20 2>/dev/null
 sysctl -w vm.dirty_background_ratio=5 2>/dev/null
 sysctl -w vm.vfs_cache_pressure=200 2>/dev/null
 
-# سكربت الخلفية لتحديث البيانات الحقيقية لـ WebUI والمهام المتكررة
+# إعادة تأكيد مسار الموديول الثابت للـ WebUI
 MODDIR="/data/adb/modules/Turbo-Performance"
 mkdir -p "$MODDIR/webroot/assets"
 
+# 🔍 [ ذكاء الإقلاع ] انتظر حتى يكتب المستخدم كلمة السر ويفتح القفل وتستقر الواجهة
+while [ "$(getprop sys.boot_completed)" != "1" ]; do
+  sleep 3
+done
+
+while ! pm list packages >/dev/null 2>&1; do
+  sleep 2
+done
+
+# استراحة 5 ثوانٍ بعد فتح القفل مباشرة لمنع أي لجلجة أثناء تحميل اللانشر
+sleep 5
+
+# ⚡ تشغيل سكربت منظف الرام العميق (نفس وظيفة زر الـ action) تلقائياً الآن!
+if [ -f "$MODDIR/action.sh" ]; then
+  sh "$MODDIR/action.sh"
+fi
+
+# سكربت الخلفية لتحديث البيانات الحقيقية لـ WebUI والمهام المتكررة
 while true; do
   # أ. قفل الـ KSM باستمرار لمنع الفريم دروب وحرارة المعالج أثناء اللعب
   if [ -f /sys/kernel/mm/ksm/run ]; then
