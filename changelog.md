@@ -17,23 +17,4 @@ A powerful performance optimization module designed for Android, now with a full
 ## 📝 What's New in Today's v1.3 Update
 
 ### 🎮 [ Performance & Gaming Intelligence ]
-* **Smart Post-Unlock Auto Clean (NEW):** Integrated an intelligent boot trigger inside `service.sh`. The module now silently waits until the device completely boots up and the user unlocks the lockscreen (enters password/fingerprint). Once the system launcher fully loads, it automatically executes the Deep RAM Cleaner (`action.sh`) after a 5-second delay to ensure maximum free RAM right from the start without causing any system UI lag. system files instead of displaying static, hardcoded indicators.
-* **Clean Battery Monitoring:** Integrated real-time capacity tracking (Charge Full vs. Design Capacity in **mAh**) to accurately calculate your precise Battery Health percentage in a single, well-formatted row.
-
----
-
-## 🛠️ Module Structure Checklist
-Before zipping your release, ensure your `.zip` archive only contains the following structure:
-
-```text
-Turbo-Performance-v1.2.zip
-├── webroot/
-│   ├── assets/
-│   ├── index.html   <-- (Clean layout with LTR forced)
-│   └── monitor.js
-├── zram/
-├── service.sh       <-- (The background loop & VM lock)
-├── post-fs-data.sh  <-- (Updated to 60 swappiness)
-├── action.sh        <-- (The new Deep Safe RAM cleaner)
-├── module.prop      <-- (Update versionCode to 3, version to 1.2)
-└── config.prop
+* **Smart Post-Unlock Auto Clean (NEW):** Integrated an intelligent boot trigger inside `service.sh`. The module now silently waits until the device completely boots up and the user unlocks the lockscreen (enters password/fingerprint). Once the system launcher fully loads, it automatically executes the Deep RAM Cleaner (`action.sh`) after a 5-second delay to ensure maximum free RAM right from the start without causing any system UI lag.
