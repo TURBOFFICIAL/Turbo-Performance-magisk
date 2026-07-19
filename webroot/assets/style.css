@@ -3,7 +3,7 @@ body {
     color: #e0e0e2; 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     padding: 15px; 
-    direction: rtl; 
+    direction: ltr; 
     margin: 0; 
 }
 
@@ -36,8 +36,8 @@ h2 {
     margin: 0 0 15px 0; 
     color: #ff9d00; 
     font-size: 16px; 
-    border-right: 3px solid #ff9d00; 
-    padding-right: 8px; 
+    border-left: 3px solid #ff9d00; 
+    padding-left: 8px; 
 }
 
 .data-row { 

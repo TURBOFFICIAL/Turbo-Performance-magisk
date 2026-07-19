@@ -1,7 +1,7 @@
 id=Turbo-Performance
 name=Turbo performance
-version=1.3
-versionCode=4
+version=1.4
+versionCode=5
 author=Turbo
 description=🚀 [AI-Engineered] ZRAM & Memory Optimization with WebUI. Note: Device may experience brief lag after boot until scripts fully initialize.
 updateJson=https://raw.githubusercontent.com/TURBOFFICIAL/Turbo-Performance-magisk/main/update.json

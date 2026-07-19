@@ -86,16 +86,14 @@ async function updateSystemStats() {
         }
 
         // ==========================================
-        // 🔥 Inject Virtual Memory (VM) Live Stats
+        // Virtual Memory (VM) Live Stats - بتتقرا من stats.json الحقيقي
         // ==========================================
         if (document.getElementById('vm-swappiness')) {
-            document.getElementById('vm-swappiness').innerText = data.swappiness || "60";
-            document.getElementById('vm-dirty-ratio').innerText = "20%";
-            document.getElementById('vm-dirty-bg-ratio').innerText = "5%";
-            document.getElementById('vm-vfs-pressure').innerText = "200";
-            
-            // قراءة خوارزمية ZRAM النشطة ديناميكياً من الـ config أو الافتراضي
-            document.getElementById('zram-algo').innerText = "lz4";
+            document.getElementById('vm-swappiness').innerText = data.swappiness ?? "--";
+            document.getElementById('vm-dirty-ratio').innerText = (data.dirtyRatio ?? "--") + "%";
+            document.getElementById('vm-dirty-bg-ratio').innerText = (data.dirtyBgRatio ?? "--") + "%";
+            document.getElementById('vm-vfs-pressure').innerText = data.vfsPressure ?? "--";
+            document.getElementById('zram-algo').innerText = data.zramAlgo || "--";
         }
 
         // 4. Battery Data + Health & Battery Life
@@ -114,13 +112,13 @@ async function updateSystemStats() {
         }
 
         // ==========================================
-        // 🔋 Inject Battery Health & Life Stats
+        // Battery Health & Life Stats
         // ==========================================
-        if (data.batChargeFull && data.batDesignFull) {
+        if (data.batChargeFull && data.batDesignFull && parseInt(data.batDesignFull) > 0) {
             const batLevelElem = document.getElementById('bat-level');
             if (batLevelElem) {
                 const batCard = batLevelElem.parentElement.parentElement; // Main Battery Card
-                
+
                 let customHealthRow = document.getElementById('custom-bat-health-row');
                 if (!customHealthRow) {
                     customHealthRow = document.createElement('div');
@@ -135,27 +133,28 @@ async function updateSystemStats() {
                         <span style="color: #aaa;">Battery Health:</span>
                         <span id="bat-health-val" style="font-weight: bold; color: #00ffcc;">Calculating...</span>
                     `;
-                    // Append inside the battery card at the end
                     batCard.appendChild(customHealthRow);
                 }
 
                 // Accurate mAh calculation
                 let currentMax = Math.round(parseInt(data.batChargeFull) / 1000);
                 let designMax = Math.round(parseInt(data.batDesignFull) / 1000);
-                
+
                 // Correction loops for specific kernel layouts
                 if (currentMax < 100) { currentMax = currentMax * 100; designMax = designMax * 100; }
                 if (currentMax > 10000) { currentMax = Math.round(currentMax / 10); designMax = Math.round(designMax / 10); }
 
-                const healthPercentage = ((currentMax / designMax) * 100).toFixed(0);
-
-                // Displays as: "3400 / 4000 mAh (85%)"
-                document.getElementById('bat-health-val').innerText = `${currentMax} / ${designMax} mAh (${healthPercentage}%)`;
+                if (designMax > 0) {
+                    const healthPercentage = ((currentMax / designMax) * 100).toFixed(0);
+                    document.getElementById('bat-health-val').innerText = `${currentMax} / ${designMax} mAh (${healthPercentage}%)`;
+                } else {
+                    document.getElementById('bat-health-val').innerText = "N/A";
+                }
             }
         }
 
     } catch (e) {
-        console.log("Updating battery health and system stats...");
+        console.error("Turbo Performance: failed to update stats -", e);
     }
 }
 
