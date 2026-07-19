@@ -1,25 +1,26 @@
-# Turbo performance 🤖⚡
+# ⚡ Turbo Performance - System & ZRAM Monitor
 
-An AI-engineered Magisk/KernelSU module designed to maximize ZRAM, Swappiness, and Memory management for Android devices. Developed through advanced AI collaboration for precise kernel tuning, featuring an integrated WebUI.
+<p align="center">
+  <img src="https://img.shields.io/badge/Maintained%3F-yes-00e5ff?style=for-the-badge" alt="Maintained">
+  <img src="https://img.shields.io/badge/Android-Root%20Module-ff9d00?style=for-the-badge" alt="Android Root">
+  <img src="https://img.shields.io/badge/Supported-KernelSU%20%7C%20APatch%20%7C%20Magisk-00ff66?style=for-the-badge" alt="Supported Managers">
+</p>
 
-## 🧠 AI-Optimized Features
-- **AI-Tuned ZRAM**: Sets ZRAM size to **6GB** using the highly efficient **lz4** compression algorithm.
-- **Smart Memory Management**: Adjusts `swappiness` balancing for optimal RAM swap triggers.
-- **Micro-Stutter Reduction**: Tries to disable `KSM` (Kernel Same-page Merging) to eliminate background CPU overhead during intense gaming.
-- **Advanced Sysctl Tuning**: Extra memory parameters optimized via AI for peak performance.
-- **Integrated WebUI**: View module status and monitor tweaks directly from a web interface.
+An advanced, AI-optimized Android root module engineered to stabilize system performance, maximize available memory with a dynamic ZRAM engine, and provide a full-fledged real-time live web interface (WebUI).
 
-## ⚠️ Important Note (Post-Boot Behavior)
-- **Brief Lag After Boot**: After every restart, the mobile device will experience a **brief lag/freeze for a short duration**. This is completely normal and happens while the system triggers the `post-fs-data` scripts and the AI configurations fully initialize. Performance will return to a super-smooth state immediately after.
+---
 
-> [!WARNING]
-> **CRITICAL DISCLAIMER**
->
-> This module has been **engineered by AI** for peak system and memory optimization. 
-> **USE AT YOUR OWN RISK!** 
+## 🛠️ Key Features
+
+* **🧠 Dynamic ZRAM Allocation:** Calculates and configs ZRAM sizes on the fly based on your device's actual physical RAM percentage. No hardcoded setups.
+* **🔋 VM Lock-In Engine:** A dedicated, ultra-light background service enforces strict `sysctl` rules (swappiness, dirty ratios, cache pressure) every 60 seconds—denying internal Android overrides during heavy gaming sessions.
+* **🎮 Smart Background Cleaner:** Triggered instantly upon device unlock. Uses a precise whitelist to safely purge third-party memory hogs while completely protecting your Active Launcher, SystemUI, and Root Managers from crashing.
+* **📊 Live WebUI Dashboard:** A real-time, dark-themed system monitor that displays RAM, ZRAM, CPU/GPU frequencies, thermal conditions, and live battery stats with accurate health calculations (mAh / %).
+
+---
+> ⚠️ **CRITICAL DISCLAIMER & RISK NOTICE**
+> This module utilizes aggressive system tweaks and configurations engineered and optimized with AI assistance. By flashing this file, you accept full responsibility for any outcomes. 
 > 
-> The developer (Turbo) holds absolutely no responsibility for any bootloops, bricked devices, software instability, or hardware damage. Always ensure you have a full system backup before flashing.
-
-## 🛠️ Requirements
-- Android Device with Magisk or KernelSU installed.
-- Root access.
+> **Expected Behavior Notice:** Due to the deep system-level optimizations and memory management routines deployed instantly upon boot, your device **WILL** experience a brief, heavy interface lag/freezing for a few seconds immediately after entering your lock screen passcode. This is completely normal and expected; it is the background engine forcefully terminating third-party background services and locking in the custom kernel configurations. 
+> 
+> *Neither the developer nor any AI tools used shall be held responsible for bootloops, soft bricks, or any hardware wear.* **FLASH AT YOUR OWN RISK.**
