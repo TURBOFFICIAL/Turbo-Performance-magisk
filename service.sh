@@ -90,32 +90,10 @@ done
 MODDIR="/data/adb/modules/Turbo-Performance"
 mkdir -p "$MODDIR/webroot/assets"
 
-# ===== انتظار فتح القفل (كتابة كلمة السر) ثم قفل كل تطبيقات الخلفية =====
-# مفيش API مباشر بالـ shell لحظة كتابة الباسورد، فبنراقب اختفاء نافذة
-# الـ Keyguard/StatusBar كعلامة إن الشاشة اتفتحت فعلياً.
-echo "[+] Waiting for screen unlock..."
-UNLOCK_TRIES=0
-while [ "$UNLOCK_TRIES" -lt 300 ]; do
-  FOCUS=$(dumpsys window 2>/dev/null | grep -m1 'mCurrentFocus')
-  case "$FOCUS" in
-    *Keyguard*|*keyguard*|*NotificationShade*)
-      sleep 2
-      UNLOCK_TRIES=$((UNLOCK_TRIES + 1))
-      ;;
-    "")
-      sleep 2
-      UNLOCK_TRIES=$((UNLOCK_TRIES + 1))
-      ;;
-    *)
-      break
-      ;;
-  esac
-done
-
-echo "[+] Screen unlocked - running background cleaner..."
-if [ -f "$MODDIR/action.sh" ]; then
-  sh "$MODDIR/action.sh"
-fi
+# ملحوظة: شلنا آلية "قفل التطبيقات تلقائياً بعد فتح الشاشة" نهائياً.
+# اتضح إنها بتشتغل في توقيت مش متحكم فيه، وممكن تقفل تطبيق في نص عملية
+# حساسة (تسجيل دخول، دفع، حفظ) من غير أي تحذير. استخدم زرار الـ action
+# يدوياً بس، لما تكون متأكد إنك مش في نص حاجة محتاجة تفضل شغالة.
 
 # ===== لوب تحديث بيانات الـ WebUI - كل 5 ثواني بدل 2 =====
 # بيكتب على التخزين، فمفيش داعي يكون سريع أوي عشان منقلّلش من عمر التخزين
