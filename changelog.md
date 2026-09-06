@@ -1,20 +1,48 @@
-## 🚀 Turbo Performance v1.4 - Re-Engineered Stability & WebUI 🧠
+═════════════════════════════════════════════════════
+     TURBO PERFORMANCE v1.5 - UPDATE CHANGELOG
+═════════════════════════════════════════════════════
 
-> ⚠️ **Disclaimer / Note:** This version features advanced configurations engineered and optimized with AI assistance. Use at your own risk. Device may experience a brief, temporary lag for a few seconds after booting until all background engine scripts fully initialize.
+📝 WHAT'S CHANGED:
 
-### 🛠️ What's New & Changelog:
+🔴 REMOVED: Automatic App Termination on Screen Unlock
+   └─ Was causing crashes during login/payment operations
+   └─ Now manual only - tap action button when you want
 
-* **🧠 Smart ZRAM Engine:** 
-  - Dropped external `.ko` kernel modules completely to eliminate bootloop risks.
-  - ZRAM size is now calculated dynamically based on a percentage (`ZRAM_PERCENT`) of your actual device total RAM, rather than a hardcoded value.
+✅ IMPROVED: Stable sysctl Enforcement
+   └─ Parameters now persist (checked every 60 seconds)
+   └─ Memory optimization stays locked in even if ROM changes values
 
-* **🔋 Persistent VM Tuning (Anti-Override):**
-  - Moved memory adjustments out of `post-fs-data.sh` to prevent ROM overrides.
-  - Added a super-lightweight background loop that forces optimal `sysctl` entries (swappiness, dirty ratios) every 60 seconds to lock in gaming stability.
+📊 RESULTS:
+   • Better stability (no crashes during sensitive ops)
+   • Better battery life (no unlock detection polling)
+   • Full user control over when apps are cleaned
 
-* **🎮 Safe Background Cleaner (`action.sh`):**
-  - Re-engineered the killer script to automatically detect and whitelist your active Launcher, SystemUI, Google Services, and Root Manager packages (Magisk, KernelSU, APatch) to prevent interface crashes.
+═════════════════════════════════════════════════════
 
-* **📊 AI-Enhanced WebUI & Storage Protection:**
-  - Extended the dashboard write-interval to 5 seconds to reduce flash storage overhead and extend UFS memory lifespan.
-  - Implemented dynamic DOM manipulation to auto-inject a separate **GPU Status card** and an **Accurate Battery Health tracker (mAh / %)** on the fly.
+📥 FILES MODIFIED:
+   ✓ service.sh (MUST REPLACE)
+
+📥 FILES UNCHANGED (no need to replace):
+   • config.prop
+   • post-fs-data.sh
+   • action.sh
+   • monitor.js
+   • style.css
+   • index.html
+
+═════════════════════════════════════════════════════
+
+🎮 HOW TO USE:
+   1. Memory optimization runs automatically
+   2. To clean background apps: Tap action button manually
+   3. Best time to tap: Before gaming, when idle
+   4. Avoid tapping during: Login, purchases, file transfers
+
+═════════════════════════════════════════════════════
+
+⚠️ IMPORTANT:
+   After updating, reboot your device!
+
+═════════════════════════════════════════════════════
+v1.5 • July 19, 2026 • Stability Update
+
