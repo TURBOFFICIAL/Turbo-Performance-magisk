@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turbo Performance - System & ZRAM Monitor</title>
+    <title>Turbo Performance - Memory Monitor</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body dir="ltr">
 
-    <h2>Turbo Performance - System & ZRAM Monitor ⚡</h2>
+    <h2>Turbo Performance ⚡</h2>
 
     <div class="grid">
         <div class="card">
@@ -18,49 +18,65 @@
             <br>
             <div class="data-row"><span>Active ZRAM:</span><span id="zram-usage">Reading...</span></div>
             <div class="progress-container"><div id="zram-progress" class="progress-bar zram-color"></div></div>
-            <br>
-            <div class="data-row"><span>Swappiness (Active):</span><span id="swap-val">--</span></div>
         </div>
 
         <div class="card">
-            <h3>CPU & GPU</h3>
-            <div class="data-row"><span>CPU Temperature:</span><span id="cpu-temp">Reading...</span></div>
-            <div class="data-row"><span>Big Cores Frequency:</span><span id="cpu-freq">Reading...</span></div>
-            <div class="data-row"><span>GPU Frequency:</span><span id="gpu-freq">Reading...</span></div>
+            <h3>Background Cleaner</h3>
+            <button id="action-btn" class="action-button">🧹 Clean Background Apps</button>
+            <p id="action-status" class="hint-text"></p>
         </div>
 
         <div class="card">
-            <h3>🧠 Virtual Memory (VM) Status</h3>
-            <div class="data-row">
-                <span>vm.swappiness:</span>
-                <span id="vm-swappiness" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            <h3>ZRAM Size</h3>
+            <div class="toggle-row">
+                <label class="radio-label">
+                    <input type="radio" name="zram-mode" value="auto" id="zram-mode-auto" checked>
+                    Auto (50% of device RAM)
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="zram-mode" value="manual" id="zram-mode-manual">
+                    Manual
+                </label>
             </div>
-            <div class="data-row">
-                <span>vm.dirty_ratio:</span>
-                <span id="vm-dirty-ratio" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
+            <div id="zram-manual-row" class="data-row" style="display:none; margin-top:10px;">
+                <input type="number" id="zram-manual-input" placeholder="Size in MB" min="128" step="128">
             </div>
-            <div class="data-row">
-                <span>vm.dirty_background_ratio:</span>
-                <span id="vm-dirty-bg-ratio" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
-            </div>
-            <div class="data-row">
-                <span>vm.vfs_cache_pressure:</span>
-                <span id="vm-vfs-pressure" class="value" style="font-weight: bold; color: #ff9f43;">--</span>
-            </div>
-            <div class="data-row">
-                <span>ZRAM Compression:</span>
-                <span id="zram-algo" class="value" style="font-weight: bold; color: #00ffcc;">--</span>
-            </div>
+            <button id="zram-save-btn" class="action-button secondary">Save ZRAM Setting</button>
+            <p id="zram-status" class="hint-text"></p>
         </div>
 
         <div class="card">
-            <h3>Battery & Power</h3>
-            <div class="data-row"><span>Battery Level:</span><span id="bat-level">--</span></div>
-            <div class="data-row"><span>Battery Temp:</span><span id="bat-temp">--</span></div>
-            <div class="data-row"><span>Current Draw:</span><span id="bat-current">--</span></div>
+            <h3>Auto-Close on App Open</h3>
+            <p class="hint-text">When enabled, opening any app in the list below will automatically close all other background apps (except your excluded apps).</p>
+            <div class="toggle-row">
+                <label class="switch">
+                    <input type="checkbox" id="trigger-enabled-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span id="trigger-enabled-label">Disabled</span>
             </div>
+            <div id="trigger-apps-list" class="app-list"></div>
+            <button id="trigger-add-btn" class="action-button secondary">+ Add App</button>
+        </div>
+
+        <div class="card">
+            <h3>Excluded Apps</h3>
+            <p class="hint-text">Apps in this list will never be closed by the action button or the auto-close trigger.</p>
+            <div id="exclude-apps-list" class="app-list"></div>
+            <button id="exclude-add-btn" class="action-button secondary">+ Add App</button>
+        </div>
     </div>
 
-    <script src="assets/monitor.js"></script>
+    <!-- App picker modal -->
+    <div id="app-picker-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box">
+            <h3>Select an App</h3>
+            <input type="text" id="app-picker-search" placeholder="Search package name...">
+            <div id="app-picker-list" class="app-picker-list"></div>
+            <button id="app-picker-close" class="action-button secondary">Close</button>
+        </div>
+    </div>
+
+    <script type="module" src="assets/monitor.js"></script>
 </body>
 </html>
