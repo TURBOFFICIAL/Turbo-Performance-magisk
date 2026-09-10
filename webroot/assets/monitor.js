@@ -1,8 +1,5 @@
-// Turbo Performance WebUI logic (v1.7)
-// Uses the official KernelSU WebUI JS API (exec/toast) loaded from esm.sh
-// since this module doesn't use a JS bundler. See:
-// https://www.npmjs.com/package/kernelsu
-import { exec, toast } from 'https://esm.sh/kernelsu';
+// Local bridge - no network dependency, no CDN import. See ksu-bridge.js.
+import { exec, toast, isBridgeReady } from './ksu-bridge.js';
 
 const MODDIR = '/data/adb/modules/Turbo-Performance';
 const EXCLUDE_FILE = `${MODDIR}/exclude_apps.txt`;
@@ -31,7 +28,7 @@ async function writeLines(path, lines) {
 }
 
 async function readUserConfig() {
-    const cfg = { ZRAM_MODE: 'auto', ZRAM_MANUAL_MB: '0', TRIGGER_ENABLED: 'false' };
+    const cfg = { ZRAM_MODE: 'auto', ZRAM_PERCENT: '50', ZRAM_MANUAL_MB: '0', TRIGGER_ENABLED: 'false' };
     try {
         const { errno, stdout } = await exec(`cat '${USER_CONFIG}' 2>/dev/null`);
         if (errno === 0) {
@@ -45,7 +42,7 @@ async function readUserConfig() {
 }
 
 async function writeUserConfig(cfg) {
-    const content = `ZRAM_MODE=${cfg.ZRAM_MODE}\nZRAM_MANUAL_MB=${cfg.ZRAM_MANUAL_MB}\nTRIGGER_ENABLED=${cfg.TRIGGER_ENABLED}`;
+    const content = `ZRAM_MODE=${cfg.ZRAM_MODE}\nZRAM_PERCENT=${cfg.ZRAM_PERCENT}\nZRAM_MANUAL_MB=${cfg.ZRAM_MANUAL_MB}\nTRIGGER_ENABLED=${cfg.TRIGGER_ENABLED}`;
     await exec(`cat > '${USER_CONFIG}' << 'TURBO_EOF'\n${content}\nTURBO_EOF`);
 }
 
@@ -53,33 +50,69 @@ async function writeUserConfig(cfg) {
 
 async function updateStats() {
     try {
-        const response = await fetch('assets/stats.json?t=' + Date.now());
-        const data = await response.json();
+        const { errno, stdout } = await exec(`sh '${MODDIR}/get_stats.sh'`);
+        if (errno !== 0) return;
+        const data = JSON.parse(stdout);
 
         if (data.memTotal) {
             const ramUsed = data.memTotal - data.memAvail;
             const ramPct = ((ramUsed / data.memTotal) * 100).toFixed(0);
+            const ramAvailPct = ((data.memAvail / data.memTotal) * 100).toFixed(0);
             const totalGB = (data.memTotal / 1024 / 1024).toFixed(1);
             const usedGB = (ramUsed / 1024 / 1024).toFixed(2);
+            const availGB = (data.memAvail / 1024 / 1024).toFixed(2);
             document.getElementById('ram-usage').innerText = `${usedGB} / ${totalGB} GB (${ramPct}%)`;
             document.getElementById('ram-progress').style.width = `${ramPct}%`;
+            document.getElementById('ram-available').innerText = `${availGB} GB (${ramAvailPct}%)`;
         }
 
         if (data.swapTotal && data.swapTotal > 0) {
             const zramUsed = data.swapTotal - data.swapFree;
             const zramPct = ((zramUsed / data.swapTotal) * 100).toFixed(0);
+            const zramAvailPct = ((data.swapFree / data.swapTotal) * 100).toFixed(0);
             const totalMB = (data.swapTotal / 1024).toFixed(0);
             const usedMB = (zramUsed / 1024).toFixed(0);
+            const availMB = (data.swapFree / 1024).toFixed(0);
             document.getElementById('zram-usage').innerText = `${usedMB} / ${totalMB} MB (${zramPct}%)`;
             document.getElementById('zram-progress').style.width = `${zramPct}%`;
+            document.getElementById('zram-available').innerText = `${availMB} MB (${zramAvailPct}%)`;
         } else {
             document.getElementById('zram-usage').innerText = 'Inactive';
             document.getElementById('zram-progress').style.width = '0%';
+            document.getElementById('zram-available').innerText = 'Inactive';
         }
     } catch (e) {
         console.error('Turbo Performance: stats update failed', e);
     }
 }
+
+// ---------- Stats polling lifecycle (WebUI-driven, not a background loop) ----------
+// Stats are only fetched while this page is open and visible. Closing the
+// WebUI (or backgrounding the manager app) stops polling completely - there
+// is no shell-side loop running stats calculations when nobody is looking.
+let statsInterval = null;
+
+function startStatsPolling() {
+    if (statsInterval) return;
+    updateStats();
+    statsInterval = setInterval(updateStats, 3000);
+}
+
+function stopStatsPolling() {
+    if (statsInterval) {
+        clearInterval(statsInterval);
+        statsInterval = null;
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopStatsPolling();
+    } else {
+        startStatsPolling();
+    }
+});
+window.addEventListener('pagehide', stopStatsPolling);
 
 // ---------- Action button ----------
 
@@ -102,46 +135,73 @@ async function runActionButton() {
 
 // ---------- ZRAM settings ----------
 
+let selectedZramOption = '50'; // '25' | '50' | '75' | '100' | 'custom'
+
+function setActivePresetChip(value) {
+    selectedZramOption = value;
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.value === value);
+    });
+    document.getElementById('zram-manual-row').style.display = value === 'custom' ? 'block' : 'none';
+}
+
 async function loadZramSettings() {
     const cfg = await readUserConfig();
     if (cfg.ZRAM_MODE === 'manual') {
-        document.getElementById('zram-mode-manual').checked = true;
-        document.getElementById('zram-manual-row').style.display = 'block';
+        setActivePresetChip('custom');
         document.getElementById('zram-manual-input').value = cfg.ZRAM_MANUAL_MB || '';
     } else {
-        document.getElementById('zram-mode-auto').checked = true;
-        document.getElementById('zram-manual-row').style.display = 'none';
+        const pct = String(cfg.ZRAM_PERCENT || '50');
+        const validPresets = ['25', '50', '75', '100'];
+        setActivePresetChip(validPresets.includes(pct) ? pct : '50');
     }
 }
 
 async function saveZramSettings() {
-    const mode = document.querySelector('input[name="zram-mode"]:checked').value;
-    const manualVal = parseInt(document.getElementById('zram-manual-input').value, 10);
     const statusEl = document.getElementById('zram-status');
+    let cfg = await readUserConfig();
 
-    if (mode === 'manual' && (!manualVal || manualVal < 128)) {
-        statusEl.innerText = 'Enter a valid size (minimum 128 MB).';
-        statusEl.className = 'hint-text status-warn';
-        return;
+    if (selectedZramOption === 'custom') {
+        const manualVal = parseInt(document.getElementById('zram-manual-input').value, 10);
+        if (!manualVal || manualVal < 128) {
+            statusEl.innerText = 'Enter a valid size (minimum 128 MB).';
+            statusEl.className = 'hint-text status-warn';
+            return;
+        }
+        cfg.ZRAM_MODE = 'manual';
+        cfg.ZRAM_MANUAL_MB = String(manualVal);
+    } else {
+        cfg.ZRAM_MODE = 'auto';
+        cfg.ZRAM_PERCENT = selectedZramOption;
     }
-
-    const cfg = await readUserConfig();
-    cfg.ZRAM_MODE = mode;
-    cfg.ZRAM_MANUAL_MB = mode === 'manual' ? String(manualVal) : '0';
     await writeUserConfig(cfg);
 
-    statusEl.innerText = 'Applying...';
+    // Step 1: close background apps first - safer to resize ZRAM/swap
+    // while nothing is actively relying on it.
+    statusEl.innerText = 'Closing background apps...';
     statusEl.className = 'hint-text';
+    try {
+        await exec(`sh '${MODDIR}/action.sh'`);
+    } catch (e) {
+        // Non-fatal - continue to apply ZRAM even if this step had issues
+    }
 
+    // Step 2: apply the new ZRAM size
+    statusEl.innerText = 'Applying ZRAM...';
     try {
         const { errno, stdout, stderr } = await exec(`sh '${MODDIR}/apply_zram.sh'`);
         if (errno === 0) {
-            statusEl.innerText = 'ZRAM updated successfully.';
+            const label = selectedZramOption === 'custom'
+                ? `${cfg.ZRAM_MANUAL_MB} MB (Custom)`
+                : `${selectedZramOption}% of device RAM`;
+            statusEl.innerText = `Success! ZRAM set to ${label}.`;
             statusEl.className = 'hint-text status-good';
-            toast('ZRAM settings applied');
+            toast('ZRAM updated successfully');
+            updateStats();
         } else {
             statusEl.innerText = 'Failed to apply ZRAM settings: ' + (stderr || stdout);
             statusEl.className = 'hint-text status-warn';
+            toast('ZRAM update failed');
         }
     } catch (e) {
         statusEl.innerText = 'Error: ' + e;
@@ -271,9 +331,35 @@ async function selectAppFromPicker(pkg) {
 
 // ---------- Init ----------
 
-window.onload = () => {
-    updateStats();
-    setInterval(updateStats, 3000);
+function waitForBridge(maxTries = 20) {
+    return new Promise((resolve) => {
+        let tries = 0;
+        const check = () => {
+            tries++;
+            if (isBridgeReady()) {
+                resolve(true);
+            } else if (tries >= maxTries) {
+                resolve(false);
+            } else {
+                setTimeout(check, 250);
+            }
+        };
+        check();
+    });
+}
+
+window.onload = async () => {
+    const ready = await waitForBridge();
+    if (!ready) {
+        document.getElementById('ram-usage').innerText = 'Bridge unavailable';
+        document.getElementById('zram-usage').innerText = 'Bridge unavailable';
+        document.getElementById('action-status').innerText =
+            'Could not connect to the root manager bridge (window.ksu). Try reopening the WebUI.';
+        document.getElementById('action-status').className = 'hint-text status-warn';
+        return;
+    }
+
+    startStatsPolling();
 
     loadZramSettings();
     loadTriggerSettings();
@@ -282,11 +368,8 @@ window.onload = () => {
 
     document.getElementById('action-btn').addEventListener('click', runActionButton);
 
-    document.querySelectorAll('input[name="zram-mode"]').forEach(radio => {
-        radio.addEventListener('change', () => {
-            const isManual = document.getElementById('zram-mode-manual').checked;
-            document.getElementById('zram-manual-row').style.display = isManual ? 'block' : 'none';
-        });
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => setActivePresetChip(chip.dataset.value));
     });
     document.getElementById('zram-save-btn').addEventListener('click', saveZramSettings);
 
