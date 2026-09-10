@@ -15,9 +15,11 @@
             <h3>Memory Status</h3>
             <div class="data-row"><span>Used RAM:</span><span id="ram-usage">Reading...</span></div>
             <div class="progress-container"><div id="ram-progress" class="progress-bar"></div></div>
+            <div class="data-row sub-row"><span>Available RAM:</span><span id="ram-available">Reading...</span></div>
             <br>
             <div class="data-row"><span>Active ZRAM:</span><span id="zram-usage">Reading...</span></div>
             <div class="progress-container"><div id="zram-progress" class="progress-bar zram-color"></div></div>
+            <div class="data-row sub-row"><span>Available ZRAM:</span><span id="zram-available">Reading...</span></div>
         </div>
 
         <div class="card">
@@ -28,20 +30,18 @@
 
         <div class="card">
             <h3>ZRAM Size</h3>
-            <div class="toggle-row">
-                <label class="radio-label">
-                    <input type="radio" name="zram-mode" value="auto" id="zram-mode-auto" checked>
-                    Auto (50% of device RAM)
-                </label>
-                <label class="radio-label">
-                    <input type="radio" name="zram-mode" value="manual" id="zram-mode-manual">
-                    Manual
-                </label>
+            <div class="zram-presets" id="zram-presets">
+                <button type="button" class="preset-chip" data-value="25">25%</button>
+                <button type="button" class="preset-chip" data-value="50">50% (Auto)</button>
+                <button type="button" class="preset-chip" data-value="75">75%</button>
+                <button type="button" class="preset-chip" data-value="100">100%</button>
+                <button type="button" class="preset-chip" data-value="custom">Custom</button>
             </div>
             <div id="zram-manual-row" class="data-row" style="display:none; margin-top:10px;">
                 <input type="number" id="zram-manual-input" placeholder="Size in MB" min="128" step="128">
             </div>
-            <button id="zram-save-btn" class="action-button secondary">Save ZRAM Setting</button>
+            <p class="hint-text">Applying will close all background apps first, then resize ZRAM. A brief freeze (under 1 second) is normal.</p>
+            <button id="zram-save-btn" class="action-button secondary">Apply ZRAM Setting</button>
             <p id="zram-status" class="hint-text"></p>
         </div>
 
