@@ -1,84 +1,79 @@
 ═════════════════════════════════════════════════════
-     TURBO PERFORMANCE v1.7 - CUSTOMIZATION UPDATE
+   TURBO PERFORMANCE v1.8 - RELIABILITY & CONTROL UPDATE
+═════════════════════════════════════════════════════
+
+⚡ EFFICIENCY:
+
+🔴 REMOVED: Permanent Background Stats Loop
+   └─ Stats used to run every 3s forever, even with the
+      WebUI closed - now fetched on-demand, only while
+      the WebUI is open. Zero overhead when closed.
+
+🔒 FIXED: Duplicate-Run Lock File
+   └─ Moved from /dev/shm (often missing on Android) to
+      a guaranteed path - duplicate prevention now works
+
+⚡ OPTIMIZED: Memory Reading
+   └─ ~9 shell processes per stats read reduced to 1
+
+═════════════════════════════════════════════════════
+
+🛠️ RELIABILITY:
+
+🔴 FIXED: WebUI Not Loading Stats ("Reading..." Stuck)
+   └─ Was loading its shell-bridge library from the
+      internet, which the manager's WebView blocks/fails
+      to load reliably
+   └─ Now uses a local, network-free bridge - works
+      offline, every time
+
+🔴 FIXED: "Failed to set zram0 disksize" Error
+   └─ ZRAM resize now waits and confirms each step
+      (swapoff, reset) actually completed before moving
+      to the next, with automatic retries
+   └─ Clear, specific error messages per step instead of
+      one generic failure message
+
 ═════════════════════════════════════════════════════
 
 ✨ NEW FEATURES:
 
-📊 SIMPLIFIED DASHBOARD
-   └─ WebUI now shows only what matters: RAM and ZRAM
-   └─ Removed CPU/GPU/Battery/VM cards for a cleaner view
+📊 Available RAM & Available ZRAM
+   └─ Dashboard now also shows free RAM and free ZRAM,
+      with percentages, next to the existing used stats
 
-🚫 EXCLUDED APPS LIST (NEW)
-   └─ Choose apps that should NEVER be closed
-   └─ Applies to both the manual action button and the
-      new auto-close trigger
-   └─ Add/remove apps directly from the WebUI
+⚙️ ZRAM Size Presets
+   └─ Quick-select buttons: 25% / 50% (Auto) / 75% / 100%
+   └─ Plus Custom, for entering your own size in MB
 
-🎯 AUTO-CLOSE ON APP OPEN (NEW)
-   └─ Pick specific apps that, when opened, automatically
-      close all other background apps
-   └─ Fully optional - OFF by default
-   └─ Toggle on/off anytime from the WebUI, no reboot needed
-   └─ Respects your Excluded Apps list
-
-⚙️ LIVE ZRAM SIZE CONTROL (NEW)
-   └─ Change ZRAM size directly from the WebUI - no reboot!
-   └─ Two modes:
-       • Auto (default) - 50% of device RAM, adjusts automatically
-       • Manual - set your own fixed size in MB
-   └─ Changes apply immediately when you tap Save
+🧹 Smarter ZRAM Apply
+   └─ Tapping "Apply ZRAM Setting" now automatically
+      closes background apps FIRST, then resizes ZRAM -
+      much higher success rate, since less data needs to
+      be moved out of ZRAM during the resize
+   └─ Clear success/failure message every time, showing
+      exactly what was applied
 
 ═════════════════════════════════════════════════════
 
 📥 FILES MODIFIED:
-   ✓ service.sh       (MUST REPLACE)
-   ✓ action.sh         (MUST REPLACE)
-   ✓ index.html        (MUST REPLACE)
-   ✓ monitor.js         (MUST REPLACE)
-   ✓ style.css          (MUST REPLACE)
-
-📥 NEW FILES (add these too):
+   ✓ service.sh
    ✓ apply_zram.sh
-   ✓ exclude_apps.txt   (empty by default)
-   ✓ trigger_apps.txt   (empty by default)
-   ✓ user_config.prop   (default settings)
+   ✓ index.html
+   ✓ style.css
+   ✓ monitor.js
+
+📥 NEW FILES :
+   ✓ get_stats.sh
+   ✓ webroot/assets/ksu-bridge.js
 
 📥 UNCHANGED:
-   • config.prop
-   • post-fs-data.sh
+   • config.prop, post-fs-data.sh, action.sh,
+     exclude_apps.txt, trigger_apps.txt
 
 ═════════════════════════════════════════════════════
 
-🎮 HOW TO USE THE NEW FEATURES:
-
-1. Excluded Apps:
-   Open WebUI → "Excluded Apps" card → tap "+ Add App" →
-   pick the app you never want closed.
-
-2. Auto-Close on App Open:
-   Open WebUI → "Auto-Close on App Open" card → add the
-   app(s) that should trigger cleanup → flip the switch ON.
-   Example: add your game, and every time you open it,
-   background apps get closed automatically.
-
-3. ZRAM Size:
-   Open WebUI → "ZRAM Size" card → choose Auto or Manual →
-   (if Manual) enter size in MB → tap "Save ZRAM Setting".
-   Note: You may feel a brief freeze (under 1 second) while
-   ZRAM is being resized - this is normal.
+⚠️ IMPORTANT: Reboot after updating.
 
 ═════════════════════════════════════════════════════
-
-⚠️ IMPORTANT NOTES:
-
-   • The app lists show package names (e.g. com.whatsapp),
-     not friendly app names/icons - this is a shell/WebUI
-     limitation, not a bug.
-   • Your root manager app, launcher, and system UI are
-     ALWAYS protected and cannot be closed, even if not in
-     your excluded list.
-   • After updating, reboot your device once to ensure all
-     new files are set up correctly.
-
-═════════════════════════════════════════════════════
-v1.7 • July 19, 2026 • Customization Update
+v1.8 • September 9, 2026 • Reliability & Control Update
