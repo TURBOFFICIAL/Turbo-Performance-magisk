@@ -1,7 +1,7 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 CONFIG_FILE="$MODDIR/config.prop"
-LOCK_FILE="/dev/shm/turbo_sysctl.lock"
+LOCK_FILE="/data/local/tmp/turbo_sysctl.lock"
 
 # Prevent duplicate loops if this script runs more than once
 if [ -f "$LOCK_FILE" ]; then
@@ -44,6 +44,7 @@ mkdir -p "$MODDIR/webroot/assets"
 [ -f "$MODDIR/trigger_apps.txt" ] || touch "$MODDIR/trigger_apps.txt"
 [ -f "$MODDIR/user_config.prop" ] || cat > "$MODDIR/user_config.prop" <<EOF
 ZRAM_MODE=auto
+ZRAM_PERCENT=50
 ZRAM_MANUAL_MB=0
 TRIGGER_ENABLED=false
 EOF
@@ -70,6 +71,8 @@ EOF
     [ -f "$MODDIR/user_config.prop" ] && . "$MODDIR/user_config.prop"
 
     if [ "$TRIGGER_ENABLED" = "true" ] && [ -s "$MODDIR/trigger_apps.txt" ]; then
+      # dumpsys window is a relatively heavy call - only run it while the
+      # feature is actually enabled, never on every idle cycle.
       FOCUS_LINE=$(dumpsys window 2>/dev/null | grep -m1 'mCurrentFocus')
       FOCUS_PKG=$(echo "$FOCUS_LINE" | sed -n 's#.*[{ ]u0 \([a-zA-Z0-9_.]*\)/.*#\1#p')
 
@@ -79,39 +82,17 @@ EOF
         fi
         LAST_FOCUS_PKG="$FOCUS_PKG"
       fi
+      sleep 4
+    else
+      # Feature disabled (default state) - just re-check the config flag
+      # every 30s, with zero dumpsys/grep overhead in between.
+      sleep 30
     fi
-    sleep 4
   done
 ) &
 
-# ===== WebUI stats loop (RAM + ZRAM only, 3 second interval) =====
-(
-  while true; do
-    MEMINFO=$(cat /proc/meminfo)
-    MEM_TOTAL=$(echo "$MEMINFO" | awk '/MemTotal/ {print $2}')
-    MEM_AVAIL=$(echo "$MEMINFO" | awk '/MemAvailable/ {print $2}')
-    SWAP_TOTAL=$(echo "$MEMINFO" | awk '/SwapTotal/ {print $2}')
-    SWAP_FREE=$(echo "$MEMINFO" | awk '/SwapFree/ {print $2}')
-
-    ZRAM_MODE_CUR="auto"
-    ZRAM_MANUAL_MB_CUR="0"
-    TRIGGER_ENABLED_CUR="false"
-    [ -f "$MODDIR/user_config.prop" ] && . "$MODDIR/user_config.prop" \
-      && ZRAM_MODE_CUR="$ZRAM_MODE" && ZRAM_MANUAL_MB_CUR="$ZRAM_MANUAL_MB" && TRIGGER_ENABLED_CUR="$TRIGGER_ENABLED"
-
-    cat > "$MODDIR/webroot/assets/stats.json" <<EOF
-{
-  "memTotal": $MEM_TOTAL,
-  "memAvail": $MEM_AVAIL,
-  "swapTotal": $SWAP_TOTAL,
-  "swapFree": $SWAP_FREE,
-  "zramMode": "$ZRAM_MODE_CUR",
-  "zramManualMb": $ZRAM_MANUAL_MB_CUR,
-  "triggerEnabled": $TRIGGER_ENABLED_CUR
-}
-EOF
-    sleep 3
-  done
-) &
+# ملحوظة: لوب كتابة stats.json اتشال من هنا نهائياً. دلوقتي الـ WebUI نفسه
+# بينادي get_stats.sh مباشرة وقت ما يكون مفتوح بس (شوف monitor.js)،
+# فمفيش أي عملية بتشتغل في الخلفية لحساب الـ RAM/ZRAM لما تقفل الـ WebUI.
 
 exit 0

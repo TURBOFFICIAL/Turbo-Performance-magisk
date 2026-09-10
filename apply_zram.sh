@@ -40,17 +40,74 @@ if [ ! -e /dev/block/zram0 ]; then
   exit 1
 fi
 
-swapoff /dev/block/zram0 2>/dev/null
-echo 1 > /sys/block/zram0/reset 2>/dev/null
-echo "${ZRAM_ALGO}" > /sys/block/zram0/comp_algorithm 2>/dev/null
-echo "${ZRAM_SIZE}" > /sys/block/zram0/disksize 2>/dev/null
+# ===== Step 1: swapoff, with retries. This is the step most likely to
+# take a moment on a real device (kernel needs to move swapped-out pages
+# back into RAM), so we don't just fire-and-forget it. =====
+SWAPOFF_OK=0
+i=0
+while [ "$i" -lt 15 ]; do
+  if ! grep -q '^/dev/block/zram0' /proc/swaps 2>/dev/null; then
+    SWAPOFF_OK=1
+    break
+  fi
+  swapoff /dev/block/zram0 2>/dev/null
+  i=$((i + 1))
+  sleep 0.3
+done
 
-if [ "$?" -eq 0 ]; then
-  mkswap /dev/block/zram0 > /dev/null 2>&1
-  swapon /dev/block/zram0 > /dev/null 2>&1
-  echo "OK: ZRAM active - mode=${ZRAM_MODE}, algo=${ZRAM_ALGO}, size=${ZRAM_SIZE} bytes"
-  exit 0
-else
-  echo "ERROR: failed to set zram0 disksize"
+if [ "$SWAPOFF_OK" -ne 1 ]; then
+  echo "ERROR: swapoff /dev/block/zram0 did not complete in time (still active in /proc/swaps). Try closing background apps and retrying."
   exit 1
 fi
+
+# ===== Step 2: reset the device, then confirm the kernel actually
+# cleared it (disksize reads back as 0) before touching disksize again -
+# writing a new disksize while the device isn't fully reset is the most
+# common cause of "failed to set zram0 disksize". =====
+RESET_OK=0
+i=0
+while [ "$i" -lt 15 ]; do
+  echo 1 > /sys/block/zram0/reset 2>/dev/null
+  CUR_SIZE=$(cat /sys/block/zram0/disksize 2>/dev/null || echo "-1")
+  if [ "$CUR_SIZE" = "0" ]; then
+    RESET_OK=1
+    break
+  fi
+  i=$((i + 1))
+  sleep 0.3
+done
+
+if [ "$RESET_OK" -ne 1 ]; then
+  echo "ERROR: zram0 did not fully reset (disksize still ${CUR_SIZE})"
+  exit 1
+fi
+
+# ===== Step 3: set compression algorithm =====
+echo "${ZRAM_ALGO}" > /sys/block/zram0/comp_algorithm 2>/dev/null
+if [ "$?" -ne 0 ]; then
+  echo "ERROR: failed to set comp_algorithm to ${ZRAM_ALGO}"
+  exit 1
+fi
+
+# ===== Step 4: set the new size =====
+echo "${ZRAM_SIZE}" > /sys/block/zram0/disksize 2>/dev/null
+if [ "$?" -ne 0 ]; then
+  echo "ERROR: failed to set zram0 disksize to ${ZRAM_SIZE} bytes"
+  exit 1
+fi
+
+# ===== Step 5: mkswap + swapon =====
+mkswap /dev/block/zram0 > /dev/null 2>&1
+if [ "$?" -ne 0 ]; then
+  echo "ERROR: mkswap failed on zram0"
+  exit 1
+fi
+
+swapon /dev/block/zram0 > /dev/null 2>&1
+if [ "$?" -ne 0 ]; then
+  echo "ERROR: swapon failed on zram0"
+  exit 1
+fi
+
+echo "OK: ZRAM active - mode=${ZRAM_MODE}, algo=${ZRAM_ALGO}, size=${ZRAM_SIZE} bytes"
+exit 0
