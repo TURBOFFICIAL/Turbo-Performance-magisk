@@ -24,25 +24,28 @@
 
         <div class="card">
             <h3>Background Cleaner</h3>
+            <p class="hint-text">Closes all background apps (doesn't touch ZRAM).</p>
             <button id="action-btn" class="action-button">🧹 Clean Background Apps</button>
             <p id="action-status" class="hint-text"></p>
         </div>
 
         <div class="card">
-            <h3>ZRAM Size</h3>
-            <div class="zram-presets" id="zram-presets">
+            <h3>Low Memory Watchdog</h3>
+            <p class="hint-text">When enabled, background apps are closed automatically whenever Available RAM drops below the selected threshold (respects your Excluded Apps list). Off by default.</p>
+            <div class="toggle-row">
+                <label class="switch">
+                    <input type="checkbox" id="lowmem-enabled-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span id="lowmem-enabled-label">Disabled</span>
+            </div>
+            <div class="zram-presets" id="lowmem-threshold-presets">
+                <button type="button" class="preset-chip" data-value="10">10%</button>
+                <button type="button" class="preset-chip" data-value="15">15%</button>
+                <button type="button" class="preset-chip" data-value="20">20%</button>
                 <button type="button" class="preset-chip" data-value="25">25%</button>
-                <button type="button" class="preset-chip" data-value="50">50% (Auto)</button>
-                <button type="button" class="preset-chip" data-value="75">75%</button>
-                <button type="button" class="preset-chip" data-value="100">100%</button>
-                <button type="button" class="preset-chip" data-value="custom">Custom</button>
             </div>
-            <div id="zram-manual-row" class="data-row" style="display:none; margin-top:10px;">
-                <input type="number" id="zram-manual-input" placeholder="Size in MB" min="128" step="128">
-            </div>
-            <p class="hint-text">Applying will close all background apps first, then resize ZRAM. A brief freeze (under 1 second) is normal.</p>
-            <button id="zram-save-btn" class="action-button secondary">Apply ZRAM Setting</button>
-            <p id="zram-status" class="hint-text"></p>
+            <p class="hint-text">Trigger cleanup when Available RAM falls below this percentage.</p>
         </div>
 
         <div class="card">
