@@ -1,9 +1,9 @@
 # ==========================================
-# Turbo Performance - ZRAM Configuration
+# Turbo Performance - WebUI settings
 # ==========================================
-# ملحوظة: ZRAM_SIZE بقى بيتحسب ديناميكياً في service.sh
-# حسب رام الجهاز الفعلي (نسبة مئوية)، مش رقم ثابت.
-# لو عايز تتحكم في النسبة، غيّر ZRAM_PERCENT بس.
+# These switches are managed by the WebUI (Low Memory Watchdog and
+# Auto-Close on App Open). ZRAM is NOT configured here - edit zram.prop.
 
-ZRAM_ALGO=lz4
-ZRAM_PERCENT=50
+TRIGGER_ENABLED=false
+LOWMEM_ENABLED=false
+LOWMEM_THRESHOLD=15
