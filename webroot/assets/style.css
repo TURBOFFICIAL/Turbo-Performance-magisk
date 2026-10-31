@@ -117,14 +117,6 @@ h2 {
     flex-wrap: wrap;
 }
 
-.radio-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    cursor: pointer;
-}
-
 /* iOS-style switch */
 .switch {
     position: relative;
@@ -156,16 +148,6 @@ h2 {
 }
 .switch input:checked + .slider:before {
     transform: translateX(20px);
-}
-
-#zram-manual-input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #33334a;
-    background: #0b0b0e;
-    color: #fff;
-    font-size: 14px;
 }
 
 .sub-row {

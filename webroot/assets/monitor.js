@@ -4,7 +4,9 @@ import { exec, toast, isBridgeReady } from './ksu-bridge.js';
 const MODDIR = '/data/adb/modules/Turbo-Performance';
 const EXCLUDE_FILE = `${MODDIR}/exclude_apps.txt`;
 const TRIGGER_FILE = `${MODDIR}/trigger_apps.txt`;
-const USER_CONFIG = `${MODDIR}/user_config.prop`;
+// One settings file for the whole module. No drafts, no second config
+// layer - the WebUI reads and writes this file directly.
+const CONFIG_FILE = `${MODDIR}/config.prop`;
 
 let installedAppsCache = null;
 let appPickerTarget = null; // 'exclude' | 'trigger'
@@ -27,12 +29,16 @@ async function writeLines(path, lines) {
     await exec(`cat > '${path}' << 'TURBO_EOF'\n${content}\nTURBO_EOF`);
 }
 
-async function readUserConfig() {
-    const cfg = { ZRAM_MODE: 'auto', ZRAM_PERCENT: '50', ZRAM_MANUAL_MB: '0', TRIGGER_ENABLED: 'false' };
+async function readConfig() {
+    const cfg = {
+        TRIGGER_ENABLED: 'false',
+        LOWMEM_ENABLED: 'false', LOWMEM_THRESHOLD: '15'
+    };
     try {
-        const { errno, stdout } = await exec(`cat '${USER_CONFIG}' 2>/dev/null`);
+        const { errno, stdout } = await exec(`cat '${CONFIG_FILE}' 2>/dev/null`);
         if (errno === 0) {
             stdout.split('\n').forEach(line => {
+                if (line.trim().startsWith('#') || !line.includes('=')) return;
                 const [k, v] = line.split('=');
                 if (k && v !== undefined) cfg[k.trim()] = v.trim();
             });
@@ -41,9 +47,18 @@ async function readUserConfig() {
     return cfg;
 }
 
-async function writeUserConfig(cfg) {
-    const content = `ZRAM_MODE=${cfg.ZRAM_MODE}\nZRAM_PERCENT=${cfg.ZRAM_PERCENT}\nZRAM_MANUAL_MB=${cfg.ZRAM_MANUAL_MB}\nTRIGGER_ENABLED=${cfg.TRIGGER_ENABLED}`;
-    await exec(`cat > '${USER_CONFIG}' << 'TURBO_EOF'\n${content}\nTURBO_EOF`);
+// Edits ONE key in config.prop in place and leaves the rest of the file
+// (other keys, comments) untouched, instead of rewriting it from a template.
+async function setConfigValue(key, value) {
+    if (!/^[A-Z_]+$/.test(key) || !/^[A-Za-z0-9_.-]+$/.test(String(value))) {
+        console.error('Turbo Performance: refusing to write unsafe config value', key, value);
+        return;
+    }
+    await exec(
+        `if grep -q '^${key}=' '${CONFIG_FILE}'; then ` +
+        `sed -i 's/^${key}=.*/${key}=${value}/' '${CONFIG_FILE}'; ` +
+        `else echo '${key}=${value}' >> '${CONFIG_FILE}'; fi`
+    );
 }
 
 // ---------- Stats (RAM + ZRAM only) ----------
@@ -133,86 +148,43 @@ async function runActionButton() {
     setTimeout(() => { statusEl.innerText = ''; }, 4000);
 }
 
-// ---------- ZRAM settings ----------
+// ZRAM is NOT controlled from the WebUI. To change its size, edit
+// zram.prop in the module folder and reboot. The WebUI only edits the
+// Trigger / Low Memory Watchdog lines in config.prop.
 
-let selectedZramOption = '50'; // '25' | '50' | '75' | '100' | 'custom'
+// ---------- Low Memory Watchdog ----------
 
-function setActivePresetChip(value) {
-    selectedZramOption = value;
-    document.querySelectorAll('.preset-chip').forEach(chip => {
+async function loadLowMemSettings() {
+    const cfg = await readConfig();
+    const enabled = cfg.LOWMEM_ENABLED === 'true';
+    document.getElementById('lowmem-enabled-toggle').checked = enabled;
+    document.getElementById('lowmem-enabled-label').innerText = enabled ? 'Enabled' : 'Disabled';
+
+    const threshold = String(cfg.LOWMEM_THRESHOLD || '15');
+    document.querySelectorAll('#lowmem-threshold-presets .preset-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.value === threshold);
+    });
+}
+
+async function toggleLowMem() {
+    const checked = document.getElementById('lowmem-enabled-toggle').checked;
+    document.getElementById('lowmem-enabled-label').innerText = checked ? 'Enabled' : 'Disabled';
+    await setConfigValue('LOWMEM_ENABLED', checked ? 'true' : 'false');
+    toast(checked ? 'Low memory watchdog enabled' : 'Low memory watchdog disabled');
+}
+
+async function setLowMemThreshold(value) {
+    document.querySelectorAll('#lowmem-threshold-presets .preset-chip').forEach(chip => {
         chip.classList.toggle('active', chip.dataset.value === value);
     });
-    document.getElementById('zram-manual-row').style.display = value === 'custom' ? 'block' : 'none';
-}
-
-async function loadZramSettings() {
-    const cfg = await readUserConfig();
-    if (cfg.ZRAM_MODE === 'manual') {
-        setActivePresetChip('custom');
-        document.getElementById('zram-manual-input').value = cfg.ZRAM_MANUAL_MB || '';
-    } else {
-        const pct = String(cfg.ZRAM_PERCENT || '50');
-        const validPresets = ['25', '50', '75', '100'];
-        setActivePresetChip(validPresets.includes(pct) ? pct : '50');
-    }
-}
-
-async function saveZramSettings() {
-    const statusEl = document.getElementById('zram-status');
-    let cfg = await readUserConfig();
-
-    if (selectedZramOption === 'custom') {
-        const manualVal = parseInt(document.getElementById('zram-manual-input').value, 10);
-        if (!manualVal || manualVal < 128) {
-            statusEl.innerText = 'Enter a valid size (minimum 128 MB).';
-            statusEl.className = 'hint-text status-warn';
-            return;
-        }
-        cfg.ZRAM_MODE = 'manual';
-        cfg.ZRAM_MANUAL_MB = String(manualVal);
-    } else {
-        cfg.ZRAM_MODE = 'auto';
-        cfg.ZRAM_PERCENT = selectedZramOption;
-    }
-    await writeUserConfig(cfg);
-
-    // Step 1: close background apps first - safer to resize ZRAM/swap
-    // while nothing is actively relying on it.
-    statusEl.innerText = 'Closing background apps...';
-    statusEl.className = 'hint-text';
-    try {
-        await exec(`sh '${MODDIR}/action.sh'`);
-    } catch (e) {
-        // Non-fatal - continue to apply ZRAM even if this step had issues
-    }
-
-    // Step 2: apply the new ZRAM size
-    statusEl.innerText = 'Applying ZRAM...';
-    try {
-        const { errno, stdout, stderr } = await exec(`sh '${MODDIR}/apply_zram.sh'`);
-        if (errno === 0) {
-            const label = selectedZramOption === 'custom'
-                ? `${cfg.ZRAM_MANUAL_MB} MB (Custom)`
-                : `${selectedZramOption}% of device RAM`;
-            statusEl.innerText = `Success! ZRAM set to ${label}.`;
-            statusEl.className = 'hint-text status-good';
-            toast('ZRAM updated successfully');
-            updateStats();
-        } else {
-            statusEl.innerText = 'Failed to apply ZRAM settings: ' + (stderr || stdout);
-            statusEl.className = 'hint-text status-warn';
-            toast('ZRAM update failed');
-        }
-    } catch (e) {
-        statusEl.innerText = 'Error: ' + e;
-        statusEl.className = 'hint-text status-warn';
-    }
+    await setConfigValue('LOWMEM_THRESHOLD', value);
+    toast(`Watchdog threshold set to ${value}%`);
 }
 
 // ---------- Trigger (auto-close on app open) ----------
 
 async function loadTriggerSettings() {
-    const cfg = await readUserConfig();
+    const cfg = await readConfig();
     const enabled = cfg.TRIGGER_ENABLED === 'true';
     document.getElementById('trigger-enabled-toggle').checked = enabled;
     document.getElementById('trigger-enabled-label').innerText = enabled ? 'Enabled' : 'Disabled';
@@ -221,9 +193,7 @@ async function loadTriggerSettings() {
 async function toggleTrigger() {
     const checked = document.getElementById('trigger-enabled-toggle').checked;
     document.getElementById('trigger-enabled-label').innerText = checked ? 'Enabled' : 'Disabled';
-    const cfg = await readUserConfig();
-    cfg.TRIGGER_ENABLED = checked ? 'true' : 'false';
-    await writeUserConfig(cfg);
+    await setConfigValue('TRIGGER_ENABLED', checked ? 'true' : 'false');
     toast(checked ? 'Auto-close trigger enabled' : 'Auto-close trigger disabled');
 }
 
@@ -361,21 +331,21 @@ window.onload = async () => {
 
     startStatsPolling();
 
-    loadZramSettings();
     loadTriggerSettings();
+    loadLowMemSettings();
     refreshExcludeList();
     refreshTriggerList();
 
     document.getElementById('action-btn').addEventListener('click', runActionButton);
 
-    document.querySelectorAll('.preset-chip').forEach(chip => {
-        chip.addEventListener('click', () => setActivePresetChip(chip.dataset.value));
-    });
-    document.getElementById('zram-save-btn').addEventListener('click', saveZramSettings);
-
     document.getElementById('trigger-enabled-toggle').addEventListener('change', toggleTrigger);
     document.getElementById('trigger-add-btn').addEventListener('click', () => openAppPicker('trigger'));
     document.getElementById('exclude-add-btn').addEventListener('click', () => openAppPicker('exclude'));
+
+    document.getElementById('lowmem-enabled-toggle').addEventListener('change', toggleLowMem);
+    document.querySelectorAll('#lowmem-threshold-presets .preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => setLowMemThreshold(chip.dataset.value));
+    });
 
     document.getElementById('app-picker-close').addEventListener('click', () => {
         document.getElementById('app-picker-modal').style.display = 'none';
