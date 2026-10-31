@@ -1,79 +1,17 @@
-═════════════════════════════════════════════════════
-   TURBO PERFORMANCE v1.8 - RELIABILITY & CONTROL UPDATE
-═════════════════════════════════════════════════════
+# v1.9 - Simplified ZRAM & Memory Control
 
-⚡ EFFICIENCY:
+## Changes
+- **ZRAM is now set from one file:** `zram.prop` (module folder). Edit `ZRAM_SIZE_MB`, save, reboot. `0` turns ZRAM off. The WebUI no longer controls ZRAM.
+- **New: Low Memory Watchdog** (off by default) - closes background apps automatically when available RAM drops below 10 / 15 / 20 / 25%.
+- **Clean Background Apps** now only closes apps (it no longer touches ZRAM).
+- **Fixed:** the root manager is now reliably protected from being closed (KernelSU-Next uses a randomized package name, so name matching never worked).
+- **Fixed:** toggling a WebUI switch no longer erases other settings in `config.prop`.
+- **Fixed:** duplicate-run protection now actually works.
+- **Memory tuning:** `vm.watermark_scale_factor=200`, `vm.page-cluster=0`.
+- **Storage tuning:** I/O scheduler `none`/`noop`/`deadline` and read-ahead 512 KB (applied once after boot).
+- Lower idle overhead: Auto-Close and Watchdog loops do almost nothing while disabled.
 
-🔴 REMOVED: Permanent Background Stats Loop
-   └─ Stats used to run every 3s forever, even with the
-      WebUI closed - now fetched on-demand, only while
-      the WebUI is open. Zero overhead when closed.
-
-🔒 FIXED: Duplicate-Run Lock File
-   └─ Moved from /dev/shm (often missing on Android) to
-      a guaranteed path - duplicate prevention now works
-
-⚡ OPTIMIZED: Memory Reading
-   └─ ~9 shell processes per stats read reduced to 1
-
-═════════════════════════════════════════════════════
-
-🛠️ RELIABILITY:
-
-🔴 FIXED: WebUI Not Loading Stats ("Reading..." Stuck)
-   └─ Was loading its shell-bridge library from the
-      internet, which the manager's WebView blocks/fails
-      to load reliably
-   └─ Now uses a local, network-free bridge - works
-      offline, every time
-
-🔴 FIXED: "Failed to set zram0 disksize" Error
-   └─ ZRAM resize now waits and confirms each step
-      (swapoff, reset) actually completed before moving
-      to the next, with automatic retries
-   └─ Clear, specific error messages per step instead of
-      one generic failure message
-
-═════════════════════════════════════════════════════
-
-✨ NEW FEATURES:
-
-📊 Available RAM & Available ZRAM
-   └─ Dashboard now also shows free RAM and free ZRAM,
-      with percentages, next to the existing used stats
-
-⚙️ ZRAM Size Presets
-   └─ Quick-select buttons: 25% / 50% (Auto) / 75% / 100%
-   └─ Plus Custom, for entering your own size in MB
-
-🧹 Smarter ZRAM Apply
-   └─ Tapping "Apply ZRAM Setting" now automatically
-      closes background apps FIRST, then resizes ZRAM -
-      much higher success rate, since less data needs to
-      be moved out of ZRAM during the resize
-   └─ Clear success/failure message every time, showing
-      exactly what was applied
-
-═════════════════════════════════════════════════════
-
-📥 FILES MODIFIED:
-   ✓ service.sh
-   ✓ apply_zram.sh
-   ✓ index.html
-   ✓ style.css
-   ✓ monitor.js
-
-📥 NEW FILES :
-   ✓ get_stats.sh
-   ✓ webroot/assets/ksu-bridge.js
-
-📥 UNCHANGED:
-   • config.prop, post-fs-data.sh, action.sh,
-     exclude_apps.txt, trigger_apps.txt
-
-═════════════════════════════════════════════════════
-
-⚠️ IMPORTANT: Reboot after updating.
-
-═════════════════════════════════════════════════════
-v1.8 • September 9, 2026 • Reliability & Control Update
+## Update notes
+- Reboot after updating.
+- Your `exclude_apps.txt` and `trigger_apps.txt` are not touched.
+- If you edited ZRAM before: set your size in `zram.prop` (the old `ZRAM_SIZE` line in `config.prop` is gone).
